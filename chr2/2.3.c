@@ -7,9 +7,9 @@
 #define MAXLEN 1000
 
 /* functions */
-int htoi(char []);
+unsigned int htoi(char []);
 
-int htoi(char s[])
+unsigned int htoi(char s[])
 {
 
   // var
@@ -18,7 +18,7 @@ int htoi(char s[])
   i = 0;
 
   /* detect optional 0x or 0X */
-  if(s[0] == '0' && tolower(s[1]) == 'x' && s[2] == '\0')
+  if(s[0] == '0' && tolower(s[1]) == 'x' && s[2] != '\0')
     i = 2;
 
   hexDigit = intValue = 0;
@@ -45,10 +45,10 @@ int main(void)
   printf("Enter a hexadecimal string: ");
   scanf("%s", s);
 
-  if ((result = htoi(s)) < 0)
+  if (htoi(s) < 0)
     return -1;
 
-  printf("%i\n", result);
+  printf("%i\n", htoi(s));
 
   return 0;
 }
