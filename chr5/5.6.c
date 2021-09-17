@@ -10,6 +10,8 @@ atoi, itoa, and their variants, reverse, and strindex and getop.
 #include <ctype.h>
 
 #define MAXLINE 100
+#define BUFSIZE 100
+#define NUMBER '0'
 
 int getlinep(char*, int);
 int atoip(char*);
@@ -20,10 +22,51 @@ int getopp(char* str);
 
 int main(int argc, char** argv)
 {
-  char s[MAXLINE];
-  int n = 1245;
-  while(getlinep(s, MAXLINE))
-    printf("%s", reversep(s)); // just replace the function here to test it
+  char s[MAXLINE], pattern[MAXLINE];
+  int n;
+  int type, index;
+
+  // getlinep test
+  printf("Please enter a number:\n");
+  getlinep(s, MAXLINE);
+
+  // atoip test
+  n = atoip(s);
+  printf("atoi: %d\n", n);
+
+  // itoap test
+  printf("string(itoa): %s\nnumber: %d\n", itoap(n,s), n);
+
+  // rev test
+  printf("rev: %s", reversep(s));
+  
+  //strindex
+  printf("Enter a string you want to serach in:\n");
+  getlinep(s, MAXLINE);
+  printf("Enter pattern to search in string:\n");
+  getlinep(pattern, MAXLINE);
+  index = strindexp(s, pattern);
+  if (index == -1)
+    printf("The pattern was not found\n");
+  else printf("The pattern was found starting as position: %d\n", index);
+  // getopp test
+  printf("Please enter a number or an operator(+, -)\n");
+  while((type = getopp(s)) != EOF) {
+    switch(type) {
+    case NUMBER:
+      printf("Found number: %s\n", s);
+      break;
+    case '+':
+      printf("Found \'+\'\n");
+      break;
+    case '\n':
+      printf("Found line break\n");
+      break;
+    default:
+      printf("Found something else %s\n", s);
+      break;
+    }
+  }
 
   return 0;
 }
@@ -71,15 +114,20 @@ void swap(char* x, char* y)
 // retuns index where t occurs in s else -1
 int strindexp(char* s, char* t)
 {
-  int i, j, k;
-  for (i = 0; *(s + i) != '\0'; ++i) {
-    for (j = i, k = 0; *(t + k) != '\0' && *(s + j) == *(t + k) ; ++k, ++j)
-      ;
-      if (k > 0 && *(t + k) == '\0')
+  int i, j;
+  char* tb = t; // beginning address 
+  char* sb = s; // same
+  char* s2 = s;
+  for (i = 0; *s != '\0'; ++i, ++s) {
+    t = tb; 
+    s2 = s;
+    for (j = 0; *t != '\0' && *s2 == *t ; ++s2, ++t, ++j)
+      if (*(t + 1) == '\0' && j > 0)
         return i;
   }
   return -1;
 }
+
 
 // string->integer
 int atoip (char* s)
@@ -103,4 +151,40 @@ char* itoap(int n, char* s)
   } while ((n /= 10) > 0);
   reversep(s);
   return s;
+}
+
+int getch(void);
+void ungetch(int);
+
+int getopp(char* s) // get next operator or numeric operand
+{
+  int c;
+  while (isspace(*s = c = getch())); // remove white spaces
+  *(s+1) = '\0';
+  if (!isdigit(c) && c != '.')
+    return c; // not a number
+  if (isdigit(c)) // colect integer part
+    while (isdigit(*++s = c = getch()));
+  if (c == '.') // colect fraction part
+    while (isdigit(*++s = c = getch()));
+  *++s = '\0';
+  if (c != EOF)
+    ungetch(c);
+  return NUMBER;
+}
+
+char buf[BUFSIZE]; // buffer for ungetch
+int bufp = 0; // next free position in buf
+
+int getch(void) // get a (possibly pushed back) character
+{
+  return (bufp > 0) ? buf[--bufp] : getchar();
+}
+
+void ungetch(int c) // push back character to input
+{
+  if (bufp >= BUFSIZE)
+    printf("ungetch: too many characters\n");
+  else
+    buf[bufp++] = c;
 }
