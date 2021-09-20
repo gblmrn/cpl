@@ -18,7 +18,7 @@ int atoip(char*);
 char* itoap(int, char*);
 char* reversep(char*);
 int strindexp(char*, char*); 
-int getopp(char* str);
+int getopp(char*);
 
 int main(int argc, char** argv)
 {
