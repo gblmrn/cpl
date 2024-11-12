@@ -9,7 +9,7 @@ entab(char in[], char out[])
   for (i = 0; i != '\0'; ++i) {
     if (in[i] == ' ')
       for (nblanks = ntabs = 0; in[i] == ' '; ++i)
-        if (n 
+        if (n
 
   }
 
@@ -20,10 +20,9 @@ entab(char in[], char out[])
 #define MAXLEN 1000
 #define TABLEN 4
 
-int getLine(char line[], int maxlen)
-{
+int getLine(char line[], int maxlen) {
   int i, c;
-  
+
   for (i = 0; i < maxlen - 1 && ((c = getchar()) != EOF) && c != '\n'; ++i)
     line[i] = c;
   if (c == '\n') {
@@ -36,8 +35,7 @@ int getLine(char line[], int maxlen)
 }
 
 // replace strings of blanks by the min number of tabs and blanks
-void entab(char in[], char out[])
-{
+void entab(char in[], char out[]) {
   int i, j, nblanks, ntabs;
 
   for (i = j = 0; in[i] != '\0'; ++i) {
@@ -46,8 +44,7 @@ void entab(char in[], char out[])
         if ((nblanks + 1) % TABLEN == 0) {
           ++ntabs;
           nblanks = 0;
-        }
-        else
+        } else
           ++nblanks;
       }
       --i;
@@ -55,15 +52,13 @@ void entab(char in[], char out[])
         out[j++] = '\t';
       while (nblanks-- > 0)
         out[j++] = ' ';
-    }
-    else
+    } else
       out[j++] = in[i];
   }
   out[j] = '\0';
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   char in[MAXLEN];
   char out[MAXLEN];
 
