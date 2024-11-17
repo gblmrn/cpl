@@ -1,6 +1,7 @@
 /*
- *Exercise 5-14. Modify the sort program to handle a -r flag, which indicates
- * sorting in reverse (decreasing) order. Be sure that -r works with -n.
+ * Exercise 5-15. Add the option -f to fold upper and lower case together, so
+ * that case distinctions are not made during sorting; for example, a and A
+ * compare equal.
  */
 
 #include <stdio.h>
@@ -18,12 +19,13 @@ void writelines(char *lineptr[], int nlines);
 void swap(void *v[], int i, int j);
 void qsort2(void *lineptr[], int left, int right, int (*comp)(void *, void *));
 int numcmp(char *, char *);
-int strcmp2(char *, char *);
+int strcmp3(char *, char *);
 
 static char allocbuf[ALLOCSIZE]; /* storage for alloc */
 static char *allocp = allocbuf;  /* next free poisition */
 char *lineptr[MAXLINES];         /* pointers to text lines */
-static int rev = 1; /* reverse order flag, 1 ascending -1 descending */
+static int rev = 1;              /* reverse order flag, default ascending */
+static int fold = 0;             /* fold flag */
 
 /* getline: get a new line from input and return it's length */
 int getLine(char line[], int maxlen) {
@@ -110,8 +112,10 @@ int numcmp(char *s1, char *s2) {
     return 0;
 }
 
-/* strcmp2: compare s1 and s2 */
-int strcmp2(char *s1, char *s2) { return rev * strcmp(s1, s2); }
+/* strcmp3: compare s1 and s2 */
+int strcmp3(char *s1, char *s2) {
+  return rev * fold ? strcasecmp(s1, s2) : strcmp(s1, s2);
+}
 
 /* sort input lines */
 int main(int argc, char *argv[]) {
@@ -124,13 +128,15 @@ int main(int argc, char *argv[]) {
         numeric = 1;
       } else if (strcmp(argv[i], "-r") == 0) {
         rev = -1;
+      } else if (strcmp(argv[i], "-f") == 0) {
+        fold = 1;
       }
     }
   }
 
   if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
     qsort2((void **)lineptr, 0, nlines - 1,
-           (int (*)(void *, void *))(numeric ? numcmp : strcmp2));
+           (int (*)(void *, void *))(numeric ? numcmp : strcmp3));
     writelines(lineptr, nlines);
     return 0;
   } else {
