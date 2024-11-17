@@ -75,7 +75,7 @@ void writelines(char *lineptr[], int nlines) {
 int main(int argc, char **argv) {
   int n = 10;
   if (argc > 1) {
-    if (argv[1][0] == '-' && argv[1][1] == 'n') {
+    if (strcmp(argv[1], "-n") == 0) {
       n = atoi(argv[2]);
     }
   }
