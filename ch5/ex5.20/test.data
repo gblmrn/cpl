@@ -1,0 +1,4 @@
+char (*(*x())[])()
+void *(*comp) (int *, char *, int(*fnc)())
+char *x()
+int *x()

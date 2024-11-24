@@ -1,8 +1,10 @@
 /*
- * Exercise 5-18. Make dcl recover from input errors.
+ * Exercise 5-20. Expand dcl to handle declarations with function argument
+ * types, qualifiers like const, and so on.
  */
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define MAXTOKEN 100
@@ -12,11 +14,15 @@ enum { NO, YES };
 
 void dcl(void);
 void dirdcl(void);
-void undcl(void);
 int gettoken(void);
 int getch(void);
 void ungetch(int c);
 void errmsg(char *msg);
+void parmdcl(void);
+void dclspec(void);
+int typespec(void);
+int typequal(void);
+int compare(const void *s, const void *t);
 
 int tokentype;           /* type of last token */
 char token[MAXTOKEN];    /* last token string */
@@ -40,50 +46,36 @@ void dcl(void) {
 /* dirdcl: parse a direct declarator */
 void dirdcl(void) {
   int type;
-  if (tokentype == '(') {
-    /* ( dcl ) */
+  if (tokentype == '(') { /* ( dcl ) */
     dcl();
     if (tokentype != ')')
       errmsg("error: missing )\n");
-  } else if (tokentype == NAME) /* variable name */
-    strcpy(name, token);
-  else
-    errmsg("error: expected name or (dcl)\n");
-  while ((type = gettoken()) == PARENS || type == BRACKETS)
-    if (type == PARENS)
+  } else if (tokentype == NAME) { /* variable name */
+    if (name[0] == '\0') {
+      strcpy(name, token);
+    }
+  } else {
+    prevtoken = YES;
+  }
+  while ((type = gettoken()) == PARENS || type == BRACKETS || type == '(') {
+    if (type == PARENS) {
       strcat(out, " function returning");
-    else {
+    } else if (type == '(') {
+      strcat(out, " function expecting");
+      parmdcl();
+      strcat(out, " and returning");
+    } else {
       strcat(out, " array");
       strcat(out, token);
       strcat(out, " of");
-    }
-}
-
-/* undcl: convert word descriptions to declarations */
-void undcl(void) {
-  int type;
-  char temp[MAXTOKEN];
-  while (gettoken() != EOF) {
-    strcpy(out, token);
-    while ((type = gettoken()) != '\n') {
-      if (type == PARENS || type == BRACKETS)
-        strcat(out, token);
-      else if (type == '*') {
-        sprintf(temp, "(*%s)", out);
-        strcpy(out, temp);
-      } else if (type == NAME) {
-        sprintf(temp, "%s %s", token, out);
-        strcpy(out, temp);
-      } else {
-        printf("invalid input at %s\n", token);
-      }
     }
   }
 }
 
 /* return next token */
 int gettoken(void) {
-  int c; 
+  int c, getch(void);
+  void ungetch(int);
   char *p = token;
   if (prevtoken == YES) {
     prevtoken = NO;
@@ -131,12 +123,81 @@ void errmsg(char *msg) {
   prevtoken = YES;
 }
 
-/* convert declaration to words */
+/* parmdcl: parse a parameter declarator */
+void parmdcl(void) {
+  do {
+    dclspec();
+  } while (tokentype == ',');
+  if (tokentype != ')')
+    errmsg("missing ) in parameter declaration\n");
+}
+
+/* dclspec: declaration specification */
+void dclspec() {
+  char temp[MAXTOKEN];
+
+  temp[0] = '\0';
+  gettoken();
+  do {
+    if (tokentype != NAME) {
+      prevtoken = YES;
+      dcl();
+    } else if (typespec() == YES) {
+      strcat(temp, " ");
+      strcat(temp, token);
+      gettoken();
+    } else if (typequal() == YES) {
+      strcat(temp, " ");
+      strcat(temp, token);
+      gettoken();
+    } else {
+      errmsg("unknow type in parameter list\n");
+    }
+  } while (tokentype != ',' && tokentype != ')');
+  strcat(out, temp);
+  if (tokentype == ',')
+    strcat(out, ",");
+}
+
+/* typespec: return YES if token is type-specifier */
+int typespec(void) {
+  static const char *types[] = {
+      "char",
+      "int",
+      "void",
+  };
+  char *pt = token;
+  if (bsearch(&pt, types, sizeof(types) / sizeof(char *), sizeof(char *),
+              compare) == NULL) {
+    return NO;
+  }
+  return YES;
+}
+
+/* typequal: return YES if token is type-qualifier */
+int typequal(void) {
+  static char *typeq[] = {
+      "const",
+      "volatile",
+  };
+  char *pt = token;
+  if (bsearch(&pt, typeq, sizeof(typeq) / sizeof(char *), sizeof(char *),
+              compare) == NULL) {
+    return NO;
+  }
+  return YES;
+}
+
+/* compare: compare to strings for binary search */
+int compare(const void *s, const void *t) {
+  return strcmp(*(char **)s, *(char **)t);
+}
+
 int main() {
   while (gettoken() != EOF) {
     /* 1st token on line */
     strcpy(datatype, token); /* is the datatype */
-    out[0] = '\0';
+    name[0] = out[0] = '\0';
     dcl();
     /* parse rest of line */
     if (tokentype != '\n')
