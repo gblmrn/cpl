@@ -1,0 +1,6 @@
+auto auto break
+default default
+const void
+while volatile
+break
+/* while(comment) { if const void } */
