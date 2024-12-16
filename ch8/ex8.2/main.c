@@ -37,6 +37,9 @@ FILE2 _iob[OPEN_MAX] =
      {0, (char *)0, (char *)0, (struct flag_field){0, 1, 0, 0, 0, 0}, 1},
      {0, (char *)0, (char *)0, (struct flag_field){0, 1, 1, 0, 0, 0}, 2}};
 
+FILE2 *fopen2(char *, char *);
+int _fillbuf(FILE2 *);
+
 /* RW for owner, group, others */
 FILE2 *fopen2(char *name, char *mode) {
   int fd;
