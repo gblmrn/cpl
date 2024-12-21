@@ -4,9 +4,8 @@
  * options. (The index for this book was sorted with -df for the index category
  * and -n for the page numbers.)
  */
-
-/* Note: Unfinished... */
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +22,8 @@ void swap(void *v[], int i, int j);
 void qsort2(void *lineptr[], int left, int right, int (*comp)(void *, void *));
 int numcmp(char *, char *);
 int strcmp4(char *, char *);
+void readargs(int, char **);
+void error(char *, ...);
 
 static char allocbuf[ALLOCSIZE]; /* storage for alloc */
 static char *allocp = allocbuf;  /* next free poisition */
@@ -30,6 +31,9 @@ char *lineptr[MAXLINES];         /* pointers to text lines */
 static int rev = 1;              /* reverse order flag, default ascending */
 static int fold = 0;             /* fold flag */
 static int dir = 0;              /* directory flag */
+static int num = 0;              /* numeric flag */
+int pos1 = 0;                    /* field beginning with pos1 */
+int pos2 = 0;                    /* ending just before pos2  */
 
 /* getline: get a new line from input and return it's length */
 int getLine(char line[], int maxlen) {
@@ -139,37 +143,62 @@ int strcmp4(char *s1, char *s2) {
   return 0;
 }
 
+/* readargs: read program arguments */
+void readargs(int argc, char *argv[]) {
+  int c;
+  while (--argc > 0 && (c = (*++argv)[0]) == '-' || c == '+') {
+    if (c == '-' && !isdigit(*(argv[0] + 1))) {
+      while ((c = *++argv[0])) {
+        switch (c) {
+        case 'd':
+          dir = 1;
+          break;
+        case 'f':
+          fold = 1;
+          break;
+        case 'n':
+          num = 1;
+          break;
+        case 'r':
+          rev = -1;
+          break;
+        default:
+          printf("sort: illegal option %c\n", c);
+          error("Usage: sort -dfnr [+pos1] [-pos2]\n");
+          break;
+        }
+      }
+    } else if (c == '-') {
+      pos2 = atoi(argv[0] + 1);
+    } else if ((pos1 = atoi(argv[0] + 1)) < 0) {
+      error("Usage: sort -dfnr [+pos1] [-pos2]\n");
+    }
+  }
+  if (argc || pos1 > pos2) {
+    error("Usage: sort -dfnr [+pos1] [-pos2]\n");
+  }
+}
+
+/* error: print an error message and die */
+void error(char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  fprintf(stderr, "error: ");
+  fprintf(stderr, fmt, args);
+  fprintf(stderr, "\n");
+  va_end(args);
+  exit(1);
+}
+
 /* sort input lines */
 int main(int argc, char *argv[]) {
   int nlines;
   int i, j, numeric = 0;
 
-  if (argc > 1) {
-    for (i = 1; i < argc; ++i) {
-      if (argv[i][0] == '-') {
-        for (j = 1; argv[i][j] != '\0'; ++j) {
-          switch (argv[i][j]) {
-          case 'r':
-            rev = -1;
-            break;
-          case 'f':
-            fold = 1;
-            break;
-          case 'd':
-            dir = 1;
-            break;
-          default:
-            printf("Invalid argument\n");
-            break;
-          }
-        }
-      }
-    }
-  }
-
+  readargs(argc, argv);
   if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
     qsort2((void **)lineptr, 0, nlines - 1,
-           (int (*)(void *, void *))(numeric ? numcmp : strcmp4));
+           (int (*)(void *, void *))(num ? numcmp : strcmp4));
     writelines(lineptr, nlines);
     return 0;
   } else {
